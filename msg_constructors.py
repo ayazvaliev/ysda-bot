@@ -3,7 +3,7 @@ title_scheme_without_year = "<b>%s</b>\n\n"
 rating_scheme_without_votes = "Рейтинг на Кинопоиске: <b>%s</b>\n\n"
 rating_scheme = "Рейтинг на Кинопоиске: <b>%s</b> (%s)\n\n"
 desc_scheme = "%s\n\n"
-url_scheme = '<a href="%s">Смотреть %u</a>\n'
+url_scheme = '<a href="%s">Смотреть на %s</a>\n'
 empty_history_msg = "Your history is empty"
 stats_title_sheme = "<b>Search Statistics:</b>\n\n"
 stat_scheme = "%u. <b>%s</b> <i>%u times</i>\n"
@@ -18,17 +18,17 @@ help_msg = """/start - Start chat with <b>Bebra Cinemabot</b>
 /help - Displays this message
 /stats - Displays how many times each film has been found for you
 /history - Displays history of queries and found films based on each query\n
-In order to enter a query, just send raw message to the bot with title of the film or with\
- its description. Examples:\n
+In order to enter a query, just send raw message to the bot with title of the film. \
+Examples:\n
 <code>Venom 2018</code>\n
-<code>Фильм про крутые гонки с Вином Дизелем</code>\n\n
+<code>Остров собак</code>\n\n
 <b>ATTENTION</b>: Good accuracy of queries with just the title of the film \
-(considering there are multiple films with this title) \
-or film description is not guarantied, use extra information \
+(considering there are multiple films with this title), use extra information \
 in cases of mismatch (adding year to the query is usually enough)"""
 
+CAPTION_CAP = 1024
 
-def construct_message(urls: list[str],
+def construct_message(urls: list[tuple[str, str]],
                       name: str,
                       desc: str,
                       rating: str,
@@ -48,12 +48,14 @@ def construct_message(urls: list[str],
         else:
             res += rating_scheme_without_votes % rating
 
-    if desc != "":
-        res += desc_scheme % desc
+    formatted_urls = ""
+    for url, host_name in urls:
+        formatted_urls += url_scheme % (url, host_name)
 
-    for i, url in enumerate(urls, start=1):
-        res += url_scheme % (url, i)
-
+    if len(res) + len(desc) + len(formatted_urls) + 2> CAPTION_CAP:
+        desc = desc[:CAPTION_CAP - len(res) - len(formatted_urls) - 5] + '...'
+    res += desc + '\n\n'
+    res += formatted_urls
     return res
 
 

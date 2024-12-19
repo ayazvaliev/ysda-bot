@@ -26,7 +26,8 @@ def fetch_history(connection: sqlite3.Connection, sender: User | None) -> list[t
             raise UndefinedUser
         data = db_cursor.execute("""SELECT query, film FROM History
                                     WHERE user_id = :user_id
-                                    ORDER BY id DESC""", {"user_id": sender.id}).fetchall()
+                                    ORDER BY id DESC
+                                    LIMIT 15""", {"user_id": sender.id}).fetchall()
         return data
     finally:
         db_cursor.close()

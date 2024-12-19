@@ -9,12 +9,13 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import Message, User
+from aiogram.exceptions import TelegramBadRequest
 
 from exceptions import MovieAPIError, MovieNotFound, UndefinedUser
 from msg_constructors import construct_history_message, construct_stat_message, \
     construct_message, start_msg, help_msg
 from db_manipulations import write_entry, fetch_history, fetch_stats
-from fetchers import get_kinopoisk_info, get_film_info
+from fetchers import get_film_info, get_pirate_urls
 
 
 BOT_TOKEN = os.getenv("TOKEN")
@@ -56,12 +57,22 @@ async def query_handler(message: Message) -> None:
         sender: User | None = message.from_user
         query: str | None = message.text
 
-        if query is None:
+        if query is None or query[0] == '/':
             raise TypeError
 
-        kp_id, *pirate_urls = await get_kinopoisk_info(query)
-        name, desc, rating, votes, poster, year = await get_film_info(kp_id)
+        kp_id, name, desc, rating, votes, poster, year, type_, is_series =\
+            await get_film_info(query)
+
+        logging.info(kp_id)
+        logging.info(name)
+        logging.info(is_series)
+
         write_entry(db_connection, sender, ("%s (%s)") % (name, year if year != '' else '?'), query)
+        pirate_urls = await get_pirate_urls(kp_id=kp_id,
+                                            name=("%s (%s)") % (name, year) if year != '' else name,
+                                            type_=type_,
+                                            is_series=is_series)
+        logging.info(pirate_urls)
 
         caption = construct_message(pirate_urls,
                                     name,
@@ -71,7 +82,10 @@ async def query_handler(message: Message) -> None:
                                     year)
 
         if poster != "":
-            await message.answer_photo(poster, caption)
+            try:
+                await message.answer_photo(poster, caption)
+            except TelegramBadRequest:
+                await message.answer(caption)
         else:
             await message.answer(caption)
     except MovieNotFound:
@@ -81,7 +95,7 @@ async def query_handler(message: Message) -> None:
     except TypeError:
         await message.answer("Such query is not supported, please use /help")
     except Exception:
-        await message.answer("Unpredicted error occured")
+        await message.answer("Unexpected error occured!")
 
 
 async def main() -> None:
