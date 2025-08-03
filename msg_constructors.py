@@ -1,32 +1,6 @@
-title_scheme = "<b>%s (%s)</b>\n\n"
-title_scheme_without_year = "<b>%s</b>\n\n"
-rating_scheme_without_votes = "Рейтинг на Кинопоиске: <b>%s</b>\n\n"
-rating_scheme = "Рейтинг на Кинопоиске: <b>%s</b> (%s)\n\n"
-desc_scheme = "%s\n\n"
-url_scheme = '<a href="%s">Смотреть на %s</a>\n'
-empty_history_msg = "Your history is empty"
-stats_title_sheme = "<b>Search Statistics:</b>\n\n"
-stat_scheme = "%u. <b>%s</b> <i>%u times</i>\n"
-history_title_scheme = "<b>Search History:</b>\n\n"
-history_scheme = "%u. <i>Query</i>: %s answered by <b>%s</b>\n"
+from msg_templates import *
+from config import CAPTION_CAP
 
-start_msg = """<b>Bebra Cinemabot</b> - searches films and places to watch them for free from your queries.\
-For all information about functionality refer to /help\n\n\n
-And remember: <b>Intellectual property is theft</b>"""
-
-help_msg = """/start - Start chat with <b>Bebra Cinemabot</b>
-/help - Displays this message
-/stats - Displays how many times each film has been found for you
-/history - Displays history of queries and found films based on each query\n
-In order to enter a query, just send raw message to the bot with title of the film. \
-Examples:\n
-<code>Venom 2018</code>\n
-<code>Остров собак</code>\n\n
-<b>ATTENTION</b>: Good accuracy of queries with just the title of the film \
-(considering there are multiple films with this title), use extra information \
-in cases of mismatch (adding year to the query is usually enough)"""
-
-CAPTION_CAP = 1024
 
 def construct_message(urls: list[tuple[str, str]],
                       name: str,

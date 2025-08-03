@@ -11,3 +11,8 @@ class MovieNotFound(Exception):
 class MovieAPIError(Exception):
     def __init__(self, *args):
         super().__init__(*args)
+
+
+class SearchAPIError(Exception):
+    def __init__(self, *args):
+        super().__init__(*args)

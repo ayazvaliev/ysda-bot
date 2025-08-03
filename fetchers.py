@@ -1,40 +1,13 @@
-import os
 from yarl import URL
-from aiohttp import ClientSession
-from exceptions import MovieAPIError, MovieNotFound
+from aiohttp import ClientSession, ClientTimeout
+from exceptions import MovieAPIError, MovieNotFound, SearchAPIError
 import logging
 
-SEARCH_API = os.getenv("SEARCH_API")
-SEARCH_ID = os.getenv("SEARCH_ID")
-KINOPOISK_API = os.getenv("KINOPOISK_API")
-SEARCH_API_URL = 'https://www.googleapis.com/customsearch/v1'
-KINOPOISK_API_SEARCH_URL = 'https://api.kinopoisk.dev/v1.4/movie/search'
-BACKUP_HOSTS = ['gidonline', 'lordfilm', 'hdreska', 'hdrezka',
-                'kinogo', 'rezka', 'rutube', 'ok.ru']
-ANIME_HOSTS = ['jut.su', 'animego', 'yummyani']
-HOST_TO_NAME = {
-    'gidonline': 'ГидОнлайн',
-    'lordfilm': 'LordFilm',
-    'hdreska': 'HDReska',
-    'hdrezka': 'HDRezka',
-    'kinogo': 'КиноГо',
-    'rezka': 'Rezka',
-    'rutube': 'Rutube',
-    'ok.ru': 'Одноклассники',
-    'jut.su': 'JutSu',
-    'animego': 'AnimeGo',
-    'yummyani': 'YummyAnime'
-}
-TYPE_TO_QUERY = {
-    'movie': 'фильм',
-    'anime': 'аниме',
-    'series': 'сериал',
-    '': ''
-}
-HOSTS = [('https://gg.vtop.to', 'GGKinopoisk'), ('https://k3.kpfr.fun', 'FreeKinopoisk')]
-
+from config import *
+from tokens import SEARCH_API, SEARCH_ID, KINOPOISK_API
 
 async def google_search(query: str, site: str | None, num=1) -> list[URL]:
+    
     if site is not None:
         query = f"site:{site} " + query
     logging.info(query)
@@ -44,14 +17,17 @@ async def google_search(query: str, site: str | None, num=1) -> list[URL]:
         'cx': SEARCH_ID,
         'num': num
     }
-    async with ClientSession() as session:
-        async with session.get(SEARCH_API_URL, params=params) as resp:
-            if resp.status != 200:
-                raise MovieAPIError
-            resp_json = await resp.json()
-    if 'items' not in resp_json:
-        return list()
-    return [URL(item['link']) for item in resp_json['items']]
+    try:
+        async with ClientSession(timeout=ClientTimeout(total=TIMEOUT)) as session:
+            async with session.get(SEARCH_API_URL, params=params) as resp:
+                if resp.status != 200:
+                    raise MovieAPIError
+                resp_json = await resp.json()
+        if 'items' not in resp_json:
+            resp_json['items'] = {}
+        return [URL(item['link']) for item in resp_json['items']]
+    except:
+        raise SearchAPIError
 
 
 def parse_kinopoisk_url(url: URL) -> None | tuple[str, str]:
@@ -59,17 +35,6 @@ def parse_kinopoisk_url(url: URL) -> None | tuple[str, str]:
     if decomposed[0] != 'film' and decomposed[0] != 'series':
         return None
     return decomposed[0], decomposed[1]
-
-
-'''
-async def get_kinopoisk_info(query: str) -> tuple[str, str]:
-    kinopoisk_urls = await google_search(query, site='www.kinopoisk.ru', num=5)
-    for kinopoisk_url in kinopoisk_urls:
-        if (res := parse_kinopoisk_url(kinopoisk_url)) is not None:
-            type_, kp_id = res
-            return type_, kp_id
-    raise MovieNotFound
-'''
 
 
 async def get_pirate_urls(kp_id: str, name: str, type_: str, is_series: str) -> list[tuple[str, str]]:
@@ -160,8 +125,8 @@ def get_is_series_from_json(resp_json) -> str:
 
 async def get_film_info(query: str) -> tuple[str, ...]:
     try:
-        assert KINOPOISK_API is not None
-        async with ClientSession(headers={'X-API-KEY': KINOPOISK_API, 'accept': 'application/json'}) as session:
+        assert KINOPOISK_API
+        async with ClientSession(headers={'X-API-KEY': KINOPOISK_API, 'accept': 'application/json'}, timeout=ClientTimeout(total=TIMEOUT)) as session:
             async with session.get(KINOPOISK_API_SEARCH_URL,
                                    params={'query': query,
                                            'page': 1,

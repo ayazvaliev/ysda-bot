@@ -1,41 +1,53 @@
-## Bebra Cinema Bot (@cinemabebra_bot)
+# Bebra Cinemabot
 
-## ATTENTION, PLEASE!
+**Cinemabot** is a simple, low-latency asynchronius Telegram bot written on `aiogram` that responds to movie name requests by returning the poster, rating, description, and links where the movie can be watched. It tracks user activity and request history, enabling lightweight analytics and usage statistics via a local SQLite database.
 
-Я деплоил бота на хипхостинге, у которого сегодня по таймингу отлетели [сервера](https://t.me/hiphosting/92), в том числе и мой, сейчас возможности найти замену уже нет, поэтому если окажется, что бот не отвечает, пожалуйста черканите мне в @gan9w33d, чтобы я мог удостовериться что он у меня крутится на ноуте, спасибо за понимание!
+## Features
 
-### Устройство бота
-Бот стучит в две API-шки: [Google Custom Search API](https://programmablesearchengine.google.com/about/) и [Kinopoisk Dev API](https://kinopoisk.dev/).
+- Responds to movie queries with:
+  - Poster image
+  - Rating
+  - Description / synopsis
+  - Links where the movie can be watched (via search)
+- Persistent storage of requests and user activity using `sqlite3`
+- Statistics and history per user
+- Low-latency design: minimal hops, caching-friendly patterns, and graceful degradation on downstream failures
+- Command-based interface in Telegram:
+  - `/start` – initialize interaction with the bot
+  - `/help` – list available commands and usage guidance
+  - `/stats` – show aggregated statistics about the user’s activity
+  - `/history` – retrieve the user’s past movie requests
 
-Первое API используется для получения гугловских ссылок на странички пиратских сайтов по запросу (бот пытается по максимуму собрать ссылок с разных хостов, в итоге что-то из этого оказывается рабочим).
+## Architecture & Dependencies
 
-Вторая API-шка юзается для получения всей информации о фильме по запросу юзера: айдишника на КП, названия, года производства, описания и т.д.
+- **Kinopoisk Dev API**: used to fetch movie metadata such as title, poster URL, rating, description, year, etc.
+- **Google Search API**: used to search for URLs where the movie can be watched (streaming/availability links).
+- **SQLite3**: local embedded database for:
+  - Logging each user request
+  - Storing timestamps, query terms, success/failure status
+  - Aggregating statistics such as request count, most requested titles, error rates
+- **Telegram Bot API**: interaction layer for receiving commands and replying to users.
 
-Все запросы и фильмы, найденные по запросам, сохраняются в бд-шку, к которой бот коннектится через sqlite3.
+## Installation / Testing
 
-### Ссылки
-Выдаётся несколько ссылок на разные пиратские сайты. Под VPN-ом или Tor-ом хотя бы одна из ссылок оказывалась рабочей (по крайней мере под моими бриджами xd, на всякий случай будут указаны)
+1. Clone the repository:
 
+    ```bash
+    git clone https://your.repo.url/cinemabot.git
+    cd cinemabot
+    ```
 
-### Ручки бота
-Реализованы все required ручки:
-1. _/start_ - горячо приветствует
-2. _/help_ - даёт описание всех дергаемых ручек и какого формата должны быть запросы
-3. _/stats_ - даёт отсорченную статистику по фильмам для конкректного пользователя
-4. _/history_ - даёт отсорченную по порядку запросов информацию о запросах и найденных фильмах для конкректного пользователя
-5. Для поиска фильма достаточно просто отправить сообщение боту
+2. Create a Python virtual environment and install dependencies (Version **>=Python 3.10.12** is required):
+    ```bash
+    python -m venv venv
+    source venv/bin/activate        # or `venv\Scripts\activate` on Windows
+    pip install -r requirements.txt
+    ```
 
-### Обработка ошибок
-Обрабатывает следующие ошибки:
-1. Отлетела API-шка 😭
-2. Не получается найти фильм
-3. Запрос плохого типа (кинули картинку, необработанную ручку, стикос и т.п.)
-4. Не получается получить id текущего пользователя для вывода статистики
+3. Prepare API tokens in `tokens.env`.
 
-### Latency
-Очень нестабильный, на 99% зависит от используемых API-шек: запрос может обрабатываться как 1.5 секунды, так и 6😳😳😳, так что может быть придется чутка подождать (ничего неожиданно забанить бота не может, везде честно используется API)
-
-### Bridges
-obfs4 51.175.233.31:443 0B4391B7ACB1C56BD00F9CE3AF00EB55221671AE cert=fFZ/gI98vgyxiGSBZXcEBbd/5ZOCW5idV1G8nhT5as+lU45/FJDSc7yTZaf/ou8hRqMyWg iat-mode=0
-
-obfs4 185.68.250.161:15025 82FEF490D5080A6E7AA9D655C0AF620E31AD3A89 cert=WaiqaBn+ftvv8Vf8Vjyc9QZRTYi2JoM/y/aFhBsGQwYuAvgycU82Kv3D0bZbI6n/JGFqfg iat-mode=0
+## Usage
+Run the bot:
+```bash
+python bot.py
+```

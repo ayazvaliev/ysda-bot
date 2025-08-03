@@ -16,10 +16,10 @@ from msg_constructors import construct_history_message, construct_stat_message, 
     construct_message, start_msg, help_msg
 from db_manipulations import write_entry, fetch_history, fetch_stats
 from fetchers import get_film_info, get_pirate_urls
+from tokens import BOT_API
+from config import LOCAL_DB
 
-
-BOT_TOKEN = os.getenv("TOKEN")
-db_connection = sqlite3.connect('db/cinemabot.db', autocommit=True)
+db_connection = sqlite3.connect(LOCAL_DB, autocommit=True)
 dp = Dispatcher()
 
 
@@ -99,8 +99,8 @@ async def query_handler(message: Message) -> None:
 
 
 async def main() -> None:
-    assert BOT_TOKEN is not None
-    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    assert BOT_API
+    bot = Bot(token=BOT_API, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     await dp.start_polling(bot)
 
 
